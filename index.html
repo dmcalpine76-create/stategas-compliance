@@ -102,6 +102,41 @@ a{color:var(--crimson)}
 .hide{display:none}
 .legend span{margin-right:14px;font-size:12.5px}
 code{background:var(--fill);padding:1px 5px;border-radius:4px}
+
+/* ── look-ahead calendar (same visual language as the Morning Briefing fortnight) ── */
+.cg-legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin:4px 0 12px;font-size:12px;color:var(--muted)}
+.cg-lg{display:inline-flex;align-items:center;gap:5px}.cg-lg i{width:10px;height:10px;border-radius:2px;display:block}
+.cg-adrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:10px;font-size:12px}
+.cg-adlbl{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.cg-ad{background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:2px 7px;cursor:pointer}
+.cg-ad.od{border-color:var(--crimson);color:var(--crimson);font-weight:600}
+.cg-panel{background:var(--surface);border:1px solid var(--rule);border-radius:var(--radius);padding:12px 12px 14px;overflow-x:auto}
+.cg-grid{display:grid;grid-template-columns:repeat(14,minmax(96px,1fr));gap:0 4px;min-width:1400px}
+.cg-dh{padding:0 0 6px;border-bottom:1px solid var(--rule)}
+.cg-dh.cg-wknd{opacity:.55}
+.cg-dh.cg-today .cg-dnum{background:var(--ink);color:var(--paper);border-radius:4px;padding:0 6px}
+.cg-wkstart{border-left:1px solid var(--rule);padding-left:4px}
+.cg-dow{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--muted)}
+.cg-dnum{font-size:15px;font-weight:600;display:inline-block;line-height:1.3}
+.cg-meter{height:5px;background:var(--fill);border-radius:3px;overflow:hidden;margin:4px 0 2px}
+.cg-fill{height:100%;background:var(--mid);border-radius:3px}.cg-fill.cg-hot{background:var(--crimson)}
+.cg-mnum{font-size:11px;color:var(--muted);font-weight:600}
+.cg-col{min-height:170px;border-left:1px solid var(--rule);padding:4px 2px;display:flex;flex-direction:column;gap:4px}
+.cg-col.cg-wknd{background:var(--fill)}
+.cg-blk{border-radius:4px;padding:3px 6px;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.18);cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.cg-blk:hover{filter:brightness(1.12)}
+.cg-blk.dn{opacity:.4;text-decoration:line-through}
+.cg-blk.od{outline:2px solid var(--crimson);outline-offset:1px}
+.cg-tag{font-size:9.5px;font-weight:700;letter-spacing:.09em;opacity:.78;line-height:1.1}
+.cg-ttl{font-size:11.5px;font-weight:600;line-height:1.2;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden}
+.cg-bang{font-weight:800}
+.cm-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;min-width:900px}
+.cm-h{font-size:10.5px;font-weight:700;letter-spacing:.09em;color:var(--muted);text-transform:uppercase;padding:2px 4px}
+.cm-c{min-height:112px;border:1px solid var(--rule);border-radius:6px;padding:4px;background:var(--surface);display:flex;flex-direction:column;gap:3px}
+.cm-c.o{opacity:.45}.cm-c.w{background:var(--fill)}.cm-c.t{outline:2px solid var(--ink);outline-offset:-2px}
+.cm-n{font-size:13px;font-weight:600;display:flex;justify-content:space-between}.cm-n small{font-weight:400;color:var(--muted);font-size:10.5px}
+.cm-c .cg-blk{padding:1px 5px}.cm-c .cg-ttl{font-size:11px;-webkit-line-clamp:2}
+.cm-more{font-size:11px;color:var(--crimson);cursor:pointer;font-weight:600}
 @media print{header nav,.bar,#drawer,#veil{display:none}}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js"></script>
@@ -291,8 +326,8 @@ function reminderFor(i){ // returns label when a reminder is firing now
 }
 
 /* ============================================================ ui state */
-let VIEW='dash',FILT={cat:'',reg:'',q:'',st:'open',own:'',cal:'agenda',month:TODAY.slice(0,7)};
-const TABS=[['dash','Dashboard'],['cal','Calendar & To-do'],['reg','Register'],['evt','Events'],['regs','Regulators'],['lib','Legislation'],['set','Settings']];
+let VIEW='dash',FILT={cat:'',reg:'',q:'',st:'open',own:'',cal:'agenda',month:TODAY.slice(0,7),lv:'fort',lm:TODAY.slice(0,7)};
+const TABS=[['dash','Dashboard'],['look','Look-ahead'],['cal','Calendar & To-do'],['reg','Register'],['evt','Events'],['regs','Regulators'],['lib','Legislation'],['set','Settings']];
 function nav(){
   const od=INST.filter(i=>i.cls==='overdue').length;
   $('#nav').innerHTML=TABS.map(([k,l])=>`<button class="${VIEW===k?'on':''}" data-v="${k}">${l}${k==='cal'&&od?`<span class="badge">${od}</span>`:''}</button>`).join('');
@@ -302,7 +337,7 @@ function go(v,f){VIEW=v;if(f)Object.assign(FILT,f);render();window.scrollTo(0,0)
 function render(){
   refresh();nav();
   const m=$('#main');
-  ({dash:vDash,cal:vCal,reg:vReg,evt:vEvt,regs:vRegs,lib:vLib,set:vSet})[VIEW](m);
+  ({dash:vDash,look:vLook,cal:vCal,reg:vReg,evt:vEvt,regs:vRegs,lib:vLib,set:vSet})[VIEW](m);
   $('#clock').textContent=fmt(TODAY);
 }
 const chipCls=i=>i.cls==='overdue'?'od':i.cls==='soon'?'soon':i.cls==='done'?'done':'';
@@ -344,6 +379,7 @@ function vDash(m){
     <div class="kpi" data-go="verify"><div class="n">${ver.length}</div><div class="l">Items to verify</div></div>
     <div class="kpi" data-go="reg"><div class="n">${SEED.obligations.length}</div><div class="l">Obligations on register</div></div>
   </div>
+  <div class="sec-head">Two-week look-ahead <span class="r"><button class="btn sm" id="toLook">Open calendar</button></span></div>${fortnightHtml(INST)}
   ${crit.length?`<div class="sec-head">Critical now – overdue, severity 4–5 <span class="r">${crit.length} items</span></div><div class="panel">${crit.map(itemRow).join('')}</div>`:''}
   <div class="grid g2">
    <div>
@@ -372,7 +408,71 @@ function vDash(m){
   m.querySelectorAll('.kpi').forEach(k=>k.onclick=()=>{const g=k.dataset.go;if(g==='reg')go('reg');else go('cal',{st:g,cat:'',reg:'',q:'',cal:'agenda'})});
   m.querySelectorAll('[data-cat]').forEach(e=>e.onclick=()=>go('cal',{cat:e.dataset.cat,st:'open',reg:'',q:''}));
   m.querySelectorAll('[data-reg]').forEach(e=>e.onclick=()=>go('cal',{reg:e.dataset.reg,st:'open',cat:'',q:''}));
-  $('#toCal').onclick=()=>go('cal',{st:'open',cat:'',reg:'',q:''});$('#toRegs').onclick=()=>go('regs');
+  $('#toLook').onclick=()=>go('look');$('#toCal').onclick=()=>go('cal',{st:'open',cat:'',reg:'',q:''});$('#toRegs').onclick=()=>go('regs');
+}
+
+
+/* ============================================================ look-ahead calendar */
+const LANES={'Tenure':['TEN','#1a3a5c'],'Environment':['ENV','#1a4a2e'],'Land access':['LND','#7a5a1a'],'Overlapping tenure':['OVL','#5a3a6a'],'Safety':['SAF','#9b1c1c'],
+ 'Royalty':['ROY','#4a4a44'],'Fees':['FEE','#6b5a3a'],'Market reporting':['MKT','#0f5a6a'],'Corporate':['COR','#3d3d38'],'Event-triggered':['EVT','#7a3a1a'],'Custom':['CUS','#8c887b'],'From knowledge store':['KNW','#8c887b']};
+const lane=c=>LANES[c]||['OTH','#8c887b'];
+function lookList(){return INST.filter(i=>(!FILT.cat||i.cat===FILT.cat)&&(!FILT.reg||(i.reg||'').startsWith(FILT.reg)))}
+function blk(i){
+  const[l,c]=lane(i.cat);
+  return `<div class="cg-blk ${i.done?'dn':''} ${i.cls==='overdue'?'od':''}" style="background:${c}" data-k="${esc(i.key)}" title="${esc(i.title)} — ${esc(i.cat)} — ${esc(i.reg)}${i.due?' — '+fmt(i.due):''}"><span class="cg-tag">${l}${i.sev>=4?' <span class="cg-bang">!</span>':''}</span><span class="cg-ttl">${esc(i.title)}</span></div>`;
+}
+function legendHtml(list){
+  const cats=[...new Set(list.map(i=>i.cat).filter(Boolean))];
+  return `<div class="cg-legend">${cats.map(c=>`<span class="cg-lg"><i style="background:${lane(c)[1]}"></i>${lane(c)[0]} ${esc(c)}</span>`).join('')}<span class="cg-lg"><b class="cg-bang">!</b>&nbsp;severity 4–5</span></div>`;
+}
+function fortnightHtml(list){
+  const days=[];for(let k=0;k<14;k++)days.push(addD(TODAY,k));
+  const open=list.filter(i=>!i.done);
+  const od=open.filter(i=>i.cls==='overdue').sort((a,b)=>b.sev-a.sev);
+  const nd=open.filter(i=>i.cls==='undated');
+  let h=legendHtml(list.filter(i=>(i.due&&i.days>=-0&&i.days<14)||i.cls==='overdue'));
+  h+=`<div class="cg-adrow"><span class="cg-adlbl">Overdue (${od.length})</span>${od.slice(0,10).map(i=>`<span class="cg-ad od" data-k="${esc(i.key)}" title="${esc(i.title)}">${fmtS(i.due)} · ${esc(i.title.length>46?i.title.slice(0,44)+'…':i.title)}</span>`).join('')}${od.length>10?`<span class="tag">+${od.length-10} more</span>`:''}</div>`;
+  if(nd.length)h+=`<div class="cg-adrow"><span class="cg-adlbl">Needs a date (${nd.length})</span>${nd.slice(0,6).map(i=>`<span class="cg-ad" data-k="${esc(i.key)}" title="${esc(i.title)}">${esc(i.title.length>46?i.title.slice(0,44)+'…':i.title)}</span>`).join('')}${nd.length>6?`<span class="tag">+${nd.length-6} more</span>`:''}</div>`;
+  const heads=[],cols=[];
+  for(const d of days){
+    const dt=pd(d),wk=dt.getDay()===0||dt.getDay()===6;
+    const its=open.concat(list.filter(i=>i.done&&i.due===d)).filter(i=>i.due===d).sort((a,b)=>b.sev-a.sev);
+    const n=its.filter(i=>!i.done).length,hot=its.some(i=>!i.done&&i.sev>=5);
+    heads.push(`<div class="cg-dh ${wk?'cg-wknd':''} ${d===TODAY?'cg-today':''} ${dt.getDay()===1?'cg-wkstart':''}"><div class="cg-dow">${dt.toLocaleDateString('en-AU',{weekday:'short'}).toUpperCase()}${HOLS.has(d)?' · HOL':''}</div><div class="cg-dnum">${dt.getDate()}<span class="tag" style="margin-left:4px">${dt.toLocaleDateString('en-AU',{month:'short'})}</span></div>${wk?'':`<div class="cg-meter"><div class="cg-fill ${hot?'cg-hot':''}" style="width:${Math.min(100,n*25)}%"></div></div><div class="cg-mnum">${n?n+' due':'clear'}</div>`}</div>`);
+    cols.push(`<div class="cg-col ${wk?'cg-wknd':''} ${dt.getDay()===1?'cg-wkstart':''}">${its.map(blk).join('')}</div>`);
+  }
+  return h+`<div class="cg-panel"><div class="cg-grid">${heads.join('')}${cols.join('')}</div></div>`;
+}
+function monthHtml(list){
+  const[y,mo]=FILT.lm.split('-').map(Number);
+  const first=new Date(y,mo-1,1);let s=new Date(first);s.setDate(s.getDate()-((s.getDay()+6)%7));
+  let h=`<div class="bar"><button class="btn sm" id="lpm">◀</button><b style="min-width:160px;text-align:center;font-size:16px">${first.toLocaleDateString('en-AU',{month:'long',year:'numeric'})}</b><button class="btn sm" id="lnm">▶</button><button class="btn sm" id="ltm">This month</button></div>`;
+  h+=legendHtml(list.filter(i=>i.due&&i.due.slice(0,7)===FILT.lm));
+  h+='<div class="cg-panel"><div class="cm-grid">'+['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d=>`<div class="cm-h">${d}</div>`).join('');
+  for(let k=0;k<42;k++){
+    const d=iso(s),inM=d.slice(0,7)===FILT.lm,wk=s.getDay()===0||s.getDay()===6;
+    const its=list.filter(i=>i.due===d).sort((a,b)=>(a.done-b.done)||b.sev-a.sev);
+    h+=`<div class="cm-c ${inM?'':'o'} ${wk?'w':''} ${d===TODAY?'t':''}"><div class="cm-n"><span>${s.getDate()}</span><small>${HOLS.has(d)?'holiday':''}</small></div>${its.slice(0,3).map(blk).join('')}${its.length>3?`<div class="cm-more" data-day="${d}">+${its.length-3} more</div>`:''}</div>`;
+    s.setDate(s.getDate()+1);
+  }
+  return h+'</div></div>';
+}
+function vLook(m){
+  const cats=[...new Set(INST.map(i=>i.cat).filter(Boolean))].sort();
+  const regs=[...new Set(INST.map(i=>(i.reg||'').split(/[\/(]/)[0].trim()).filter(x=>x&&x!=='—'))].sort();
+  const list=lookList();
+  m.innerHTML=`<h2>Look-ahead calendar</h2>
+  <div class="bar"><button class="btn ${FILT.lv==='fort'?'k':''}" data-lv="fort">Two weeks</button><button class="btn ${FILT.lv==='month'?'k':''}" data-lv="month">Month</button>
+  <select id="lc">${selectOpts(cats,FILT.cat,'All categories')}</select><select id="lr">${selectOpts(regs,FILT.reg,'All regulators')}</select>
+  <span style="flex:1"></span><button class="btn sm" id="lp">Print / save as PDF</button></div>
+  <div id="lbody">${FILT.lv==='fort'?fortnightHtml(list):monthHtml(list)}</div>
+  <p class="note">Blocks are coloured by category; "!" marks severity 4–5; red outline = overdue; faded = done. Click any block to open it. Dates tagged calc in the list are calculated – confirm them against the notice.</p>`;
+  m.querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{FILT.lv=b.dataset.lv;vLook(m)});
+  $('#lc').onchange=e=>{FILT.cat=e.target.value;vLook(m)};$('#lr').onchange=e=>{FILT.reg=e.target.value;vLook(m)};$('#lp').onclick=()=>window.print();
+  if(FILT.lv==='month'){const sh=n=>{const d=new Date(...FILT.lm.split('-').map((x,i)=>i?x-1+n:+x),1);FILT.lm=iso(d).slice(0,7);vLook(m)};
+    $('#lpm').onclick=()=>sh(-1);$('#lnm').onclick=()=>sh(1);$('#ltm').onclick=()=>{FILT.lm=TODAY.slice(0,7);vLook(m)};
+    m.querySelectorAll('[data-day]').forEach(e=>e.onclick=()=>{const d=e.dataset.day;const its=list.filter(i=>i.due===d);drawer(`<div style="display:flex;justify-content:space-between"><h3>${fmt(d)}</h3><button class="btn sm" id="x">Close</button></div>${its.map(itemRow).join('')}`);$('#x').onclick=closeDrawer;bindItems($('#drawer'))})}
+  bindItems(m);
 }
 
 /* ============================================================ calendar & todo */
